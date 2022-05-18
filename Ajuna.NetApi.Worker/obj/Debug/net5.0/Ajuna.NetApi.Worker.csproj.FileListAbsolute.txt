@@ -1,0 +1,5 @@
+/Users/dimitriospaxinos/Documents/Development/Ajuna/Worker.NetApi/Ajuna.NetApi.Worker/obj/Debug/net5.0/Ajuna.NetApi.Worker.csproj.AssemblyReference.cache
+/Users/dimitriospaxinos/Documents/Development/Ajuna/Worker.NetApi/Ajuna.NetApi.Worker/obj/Debug/net5.0/Ajuna.NetApi.Worker.GeneratedMSBuildEditorConfig.editorconfig
+/Users/dimitriospaxinos/Documents/Development/Ajuna/Worker.NetApi/Ajuna.NetApi.Worker/obj/Debug/net5.0/Ajuna.NetApi.Worker.AssemblyInfoInputs.cache
+/Users/dimitriospaxinos/Documents/Development/Ajuna/Worker.NetApi/Ajuna.NetApi.Worker/obj/Debug/net5.0/Ajuna.NetApi.Worker.AssemblyInfo.cs
+/Users/dimitriospaxinos/Documents/Development/Ajuna/Worker.NetApi/Ajuna.NetApi.Worker/obj/Debug/net5.0/Ajuna.NetApi.Worker.csproj.CoreCompileInputs.cache

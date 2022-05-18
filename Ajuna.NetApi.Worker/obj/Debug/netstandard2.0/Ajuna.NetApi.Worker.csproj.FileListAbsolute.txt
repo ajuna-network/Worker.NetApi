@@ -1,0 +1,10 @@
+/Users/dimitriospaxinos/Documents/Development/Ajuna/Worker.NetApi/Ajuna.NetApi.Worker/obj/Debug/netstandard2.0/Ajuna.NetApi.Worker.csproj.AssemblyReference.cache
+/Users/dimitriospaxinos/Documents/Development/Ajuna/Worker.NetApi/Ajuna.NetApi.Worker/obj/Debug/netstandard2.0/Ajuna.NetApi.Worker.GeneratedMSBuildEditorConfig.editorconfig
+/Users/dimitriospaxinos/Documents/Development/Ajuna/Worker.NetApi/Ajuna.NetApi.Worker/obj/Debug/netstandard2.0/Ajuna.NetApi.Worker.AssemblyInfoInputs.cache
+/Users/dimitriospaxinos/Documents/Development/Ajuna/Worker.NetApi/Ajuna.NetApi.Worker/obj/Debug/netstandard2.0/Ajuna.NetApi.Worker.AssemblyInfo.cs
+/Users/dimitriospaxinos/Documents/Development/Ajuna/Worker.NetApi/Ajuna.NetApi.Worker/obj/Debug/netstandard2.0/Ajuna.NetApi.Worker.csproj.CoreCompileInputs.cache
+/Users/dimitriospaxinos/Documents/Development/Ajuna/Worker.NetApi/Ajuna.NetApi.Worker/bin/Debug/netstandard2.0/Ajuna.NetApi.Worker.deps.json
+/Users/dimitriospaxinos/Documents/Development/Ajuna/Worker.NetApi/Ajuna.NetApi.Worker/bin/Debug/netstandard2.0/Ajuna.NetApi.Worker.dll
+/Users/dimitriospaxinos/Documents/Development/Ajuna/Worker.NetApi/Ajuna.NetApi.Worker/bin/Debug/netstandard2.0/Ajuna.NetApi.Worker.pdb
+/Users/dimitriospaxinos/Documents/Development/Ajuna/Worker.NetApi/Ajuna.NetApi.Worker/obj/Debug/netstandard2.0/Ajuna.NetApi.Worker.dll
+/Users/dimitriospaxinos/Documents/Development/Ajuna/Worker.NetApi/Ajuna.NetApi.Worker/obj/Debug/netstandard2.0/Ajuna.NetApi.Worker.pdb

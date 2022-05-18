@@ -1,0 +1,22 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>netcoreapp3.1</TargetFramework>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>disable</Nullable>
+        <LangVersion>10</LangVersion>
+        <OutputType>Exe</OutputType>
+    </PropertyGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\Ajuna.NetApiExt.AjunaNode\Ajuna.NetApiExt.csproj" />
+      <ProjectReference Include="..\Ajuna.NetApi\Ajuna.NetApi.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <PackageReference Include="AustinHarris.JsonRpc" Version="1.2.3" />
+      <PackageReference Include="Serilog" Version="2.11.0" />
+      <PackageReference Include="WebSocketSharp" Version="1.0.3-rc11" />
+    </ItemGroup>
+
+</Project>
