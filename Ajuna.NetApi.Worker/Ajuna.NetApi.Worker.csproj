@@ -16,6 +16,7 @@
     <ItemGroup>
       <PackageReference Include="AustinHarris.JsonRpc" Version="1.2.3" />
       <PackageReference Include="Serilog" Version="2.11.0" />
+      <PackageReference Include="StreamJsonRpc" Version="2.11.35" />
       <PackageReference Include="WebSocketSharp" Version="1.0.3-rc11" />
     </ItemGroup>
 

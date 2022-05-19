@@ -1,18 +1,16 @@
+using System.Collections.Concurrent;
+using Ajuna.NetApi.Model.AjunaWorker;
 using AustinHarris.JsonRpc;
 using Newtonsoft.Json;
 using Serilog;
-using System;
-using System.Collections.Concurrent;
-using System.Threading;
-using System.Threading.Tasks;
 using WebSocketSharp;
 
-namespace TestTee.WebSocketClient
+namespace Ajuna.NetApi.Worker.WebSocketClient
 {
     /// <summary>
     /// Provides a means of calling JSON-RPC endpoints over a WebSocket connection.
     /// </summary>
-    public class JsonRpcClient
+    public class JsonRpcClient: IDisposable
     {
         #region Properties
 
@@ -98,7 +96,7 @@ namespace TestTee.WebSocketClient
         /// <param name="request">The JSON-RPC request to send</param>
         /// <param name="timeout">The timeout (in milliseconds) for the request</param>
         /// <returns>The response result</returns>
-        public TResult SendRequest<TResult>(JsonRequest request, int timeout = 30000)
+        public TResult SendRequest<TResult>(JsonRequest request, int timeout = 30000, bool addDelay = false)
         {
             var tcs       = new TaskCompletionSource<string>();
             var requestId = request.Id;
@@ -124,6 +122,9 @@ namespace TestTee.WebSocketClient
                 
                 if (task.IsCompleted)
                 {
+                    if (addDelay)
+                        Task.Delay(TimeSpan.FromMilliseconds(1000)).Wait();
+                    
                     // Parse the result, now that the response has been received.
                     JsonResponse response = JsonConvert.DeserializeObject<JsonResponse>(task.Result);
 
@@ -163,6 +164,9 @@ namespace TestTee.WebSocketClient
 
         #region Private
 
+        private static int _messageCounter = 1;
+        public  List<Tuple<int,JsonResponse>> Responses = new List<Tuple<int, JsonResponse>>();
+
         /// <summary>
         /// Processes messages received over the WebSocket connection.
         /// </summary>
@@ -170,6 +174,9 @@ namespace TestTee.WebSocketClient
         /// <param name="e">The Message Event Arguments</param>
         private void ProcessMessage(object sender, MessageEventArgs e)
         {
+            Log.Debug("New Message Received: " + _messageCounter);
+            _messageCounter++;
+            
             // Check for Pings.
             if (e.IsPing)
             {
@@ -207,7 +214,22 @@ namespace TestTee.WebSocketClient
             // Set the response result.
             if (_responses.TryGetValue(Convert.ToString(response.Id), out TaskCompletionSource<string> tcs))
             {
-                tcs.TrySetResult(e.Data);
+                
+                var s = JsonConvert.DeserializeObject<byte[]>(
+                    Convert.ToString(response.Result),
+                    new JsonSerializerSettings 
+                    { 
+                        Error = (sender, args) => args.ErrorContext.Handled = true
+                    });
+                var returnValue = new RpcReturnValue();
+                returnValue.Create(s);
+
+                if (returnValue.DoWatch.Value == false)
+                {
+                    var successfullySet  = tcs.TrySetResult(e.Data);
+
+                    Responses.Add(new Tuple<int,JsonResponse>(int.Parse(response.Id.ToString()),response));    
+                }
             }
             else
             {
@@ -220,5 +242,10 @@ namespace TestTee.WebSocketClient
         #endregion
 
         #endregion
+
+        public void Dispose()
+        {
+            this._webSocket.Close();
+        }
     }
 }
