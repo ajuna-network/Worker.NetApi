@@ -16,23 +16,22 @@ namespace Ajuna.NetApi.Worker.WebSocketClient;
 
 public class YetAnotherSocketClient: IDisposable
 {
-    private readonly WebSocketSharp.WebSocket _socket;
-    public readonly JsonRpcClient Client;
+    private readonly JsonRpcClient _client;
     public YetAnotherSocketClient(String url)
     {
-        _socket = new WebSocketSharp.WebSocket(url);
-        _socket.Connect();
+       var  socket = new WebSocketSharp.WebSocket(url);
+        socket.Connect();
         
-        Client = new JsonRpcClient(_socket);
+        _client = new JsonRpcClient(socket);
     }
     
-    public  RSAParameters  GetShieldingKey()
+    public  RSAParameters  ShieldingKeyAsync()
     {
         var method = "author_getShieldingKey";
 
-        var request = Client.CreateRequest(method, null);
+        var request = _client.CreateRequest(method, null);
 
-        var response = Client.SendRequest<byte[]>(request);
+        var response = _client.SendRequest<byte[]>(request);
             
         var rpcReturnValue = new RpcReturnValue();
         rpcReturnValue.Create(response);
@@ -169,16 +168,14 @@ public class YetAnotherSocketClient: IDisposable
 
         var parameters = initialRequest.Encode().Cast<object>().ToArray();
 
-        var request = Client.CreateRequest("author_submitAndWatchExtrinsic", parameters);
+        var request = _client.CreateRequest("author_submitAndWatchExtrinsic", parameters);
 
-        var result = Client.SendRequest<byte[]>(request,addDelay:true);
+        var result = _client.SendRequest<byte[]>(request,addDelay:true);
 
        // var result = await InvokeAsync<byte[]>("author_submitAndWatchExtrinsic", parameters, CancellationToken.None);
 
         var returnValue = new RpcReturnValue();
         returnValue.Create(result);
-
-       // await CloseAsync();
 
         return returnValue;
 
@@ -396,6 +393,6 @@ public class YetAnotherSocketClient: IDisposable
 
     public void Dispose()
     {
-        Client.Dispose();
+        _client.Dispose();
     }
 }
