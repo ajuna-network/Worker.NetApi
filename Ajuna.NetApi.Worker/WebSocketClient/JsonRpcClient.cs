@@ -9,8 +9,9 @@ namespace Ajuna.NetApi.Worker.WebSocketClient
 {
     /// <summary>
     /// Provides a means of calling JSON-RPC endpoints over a WebSocket connection.
+    /// and allows receiving multiple responses per request
     /// </summary>
-    public class JsonRpcClient: IDisposable
+    public class JsonRpcClient : IDisposable
     {
         #region Properties
 
@@ -54,7 +55,7 @@ namespace Ajuna.NetApi.Worker.WebSocketClient
         /// <param name="webSocket">The WebSocket channel to use</param>
         public JsonRpcClient(WebSocket webSocket)
         {
-            _webSocket            = webSocket;
+            _webSocket = webSocket;
             _webSocket.OnMessage += ProcessMessage;
         }
 
@@ -96,9 +97,9 @@ namespace Ajuna.NetApi.Worker.WebSocketClient
         /// <param name="request">The JSON-RPC request to send</param>
         /// <param name="timeout">The timeout (in milliseconds) for the request</param>
         /// <returns>The response result</returns>
-        public TResult SendRequest<TResult>(JsonRequest request, int timeout = 30000, bool addDelay = false)
+        public TResult SendRequest<TResult>(JsonRequest request, int timeout = 30000, int retryTimeOut = 10000)
         {
-            var tcs       = new TaskCompletionSource<string>();
+            var tcs = new TaskCompletionSource<string>();
             var requestId = request.Id;
 
             try
@@ -118,13 +119,31 @@ namespace Ajuna.NetApi.Worker.WebSocketClient
 
                 // Wait here until either the response has been received,
                 // or we have reached the timeout limit.
-                Task.WaitAll(new Task[] { task }, timeout);
-                
+                Task.WaitAll(new Task[] {task}, timeout);
+
                 if (task.IsCompleted)
                 {
-                    if (addDelay)
-                        Task.Delay(TimeSpan.FromMilliseconds(1000)).Wait();
-                    
+                    bool isFinalResponseRetrieved = false;
+
+                    // Wait here until final response is retrieved or time runs out. 
+                    Task.WaitAll(new Task[]
+                        {
+                            Task.Run(() =>
+                                {
+                                    while (!isFinalResponseRetrieved)
+                                    {
+                                        if (task.Result != null)
+                                        {
+                                            isFinalResponseRetrieved = true;
+                                        }
+
+                                        Task.Delay(TimeSpan.FromMilliseconds(100)).Wait();
+                                    }
+                                }
+                            )
+                        },
+                        retryTimeOut);
+
                     // Parse the result, now that the response has been received.
                     JsonResponse response = JsonConvert.DeserializeObject<JsonResponse>(task.Result);
 
@@ -137,8 +156,8 @@ namespace Ajuna.NetApi.Worker.WebSocketClient
                     // Return the result.
                     return JsonConvert.DeserializeObject<TResult>(
                         Convert.ToString(response.Result),
-                        new JsonSerializerSettings 
-                        { 
+                        new JsonSerializerSettings
+                        {
                             Error = (sender, args) => args.ErrorContext.Handled = true
                         });
                 }
@@ -164,9 +183,6 @@ namespace Ajuna.NetApi.Worker.WebSocketClient
 
         #region Private
 
-        private static int _messageCounter = 1;
-        public  List<Tuple<int,JsonResponse>> Responses = new List<Tuple<int, JsonResponse>>();
-
         /// <summary>
         /// Processes messages received over the WebSocket connection.
         /// </summary>
@@ -174,9 +190,6 @@ namespace Ajuna.NetApi.Worker.WebSocketClient
         /// <param name="e">The Message Event Arguments</param>
         private void ProcessMessage(object sender, MessageEventArgs e)
         {
-            Log.Debug("New Message Received: " + _messageCounter);
-            _messageCounter++;
-            
             // Check for Pings.
             if (e.IsPing)
             {
@@ -197,9 +210,9 @@ namespace Ajuna.NetApi.Worker.WebSocketClient
             // Parse the response from the server.
             JsonResponse response = JsonConvert.DeserializeObject<JsonResponse>(
                 e.Data,
-                new JsonSerializerSettings 
-                { 
-                    Error = (sender, args) => args.ErrorContext.Handled = true 
+                new JsonSerializerSettings
+                {
+                    Error = (sender, args) => args.ErrorContext.Handled = true
                 });
 
             // Check for an error.
@@ -207,28 +220,28 @@ namespace Ajuna.NetApi.Worker.WebSocketClient
             {
                 // Log the error details.
                 Log.Error("Error Message: " + response.Error.message);
-                Log.Error("Error Code: "    + response.Error.code);
-                Log.Verbose("Error Data: "  + response.Error.data);
+                Log.Error("Error Code: " + response.Error.code);
+                Log.Verbose("Error Data: " + response.Error.data);
             }
 
             // Set the response result.
             if (_responses.TryGetValue(Convert.ToString(response.Id), out TaskCompletionSource<string> tcs))
             {
-                
-                var s = JsonConvert.DeserializeObject<byte[]>(
+                // We have to deserialize the response here in order to see the value of DoWatch
+                var byteArray = JsonConvert.DeserializeObject<byte[]>(
                     Convert.ToString(response.Result),
-                    new JsonSerializerSettings 
-                    { 
+                    new JsonSerializerSettings
+                    {
                         Error = (sender, args) => args.ErrorContext.Handled = true
                     });
-                var returnValue = new RpcReturnValue();
-                returnValue.Create(s);
 
+                var returnValue = new RpcReturnValue();
+                returnValue.Create(byteArray);
+
+                // Add the result only if it is final e.g. DoWatch = false
                 if (returnValue.DoWatch.Value == false)
                 {
-                    var successfullySet  = tcs.TrySetResult(e.Data);
-
-                    Responses.Add(new Tuple<int,JsonResponse>(int.Parse(response.Id.ToString()),response));    
+                    tcs.TrySetResult(e.Data);
                 }
             }
             else

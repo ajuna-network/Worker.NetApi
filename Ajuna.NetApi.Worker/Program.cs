@@ -116,9 +116,10 @@ namespace TestTee
             //await RunGameAsync("ws://127.0.0.1:2000");
            // await RunGameAsync(NgrokWebSocketUrl);
             
-            var client = new YetAnotherSocketClient(NgrokWebSocketUrl);
+            //var client = new YetAnotherSocketClient(NgrokWebSocketUrl);
+            var client = new SubstrateTrackingClientExt(new Uri(NgrokWebSocketUrl));
             
-            var shieldingKey = client.GetShieldingKey();
+            var shieldingKey = await client.ShieldingKeyAsync();
 
             var mrenclaveHex = "2qWxMc45Lp5mHuCsnNnD3d63n3cNiC7183FQXDu88ijn";
             var shardHex = mrenclaveHex;

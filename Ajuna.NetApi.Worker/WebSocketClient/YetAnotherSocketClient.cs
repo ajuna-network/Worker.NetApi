@@ -170,7 +170,7 @@ public class YetAnotherSocketClient: IDisposable
 
         var request = _client.CreateRequest("author_submitAndWatchExtrinsic", parameters);
 
-        var result = _client.SendRequest<byte[]>(request,addDelay:true);
+        var result = _client.SendRequest<byte[]>(request);
 
        // var result = await InvokeAsync<byte[]>("author_submitAndWatchExtrinsic", parameters, CancellationToken.None);
 
