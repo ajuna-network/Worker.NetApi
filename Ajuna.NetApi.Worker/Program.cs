@@ -116,7 +116,6 @@ namespace TestTee
             //await RunGameAsync("ws://127.0.0.1:2000");
            // await RunGameAsync(NgrokWebSocketUrl);
             
-            //var client = new YetAnotherSocketClient(NgrokWebSocketUrl);
             var client = new SubstrateTrackingClientExt(new Uri(NgrokWebSocketUrl));
             
             var shieldingKey = await client.ShieldingKeyAsync();
