@@ -41,7 +41,7 @@ namespace TestTee
 {
     class Program
     {
-        public static string NgrokWebSocketUrl = "ws://9adb-176-92-163-72.ngrok.io";
+        public static string NgrokWebSocketUrl = "ws://b6db-176-92-130-147.ngrok.io/";
         //private const string Websocketurl = "ws://127.0.0.1:9944";
         //private const string Websocketurl = "wss://127.0.0.1:2001";
         //private const string Websocketurl = "ws://127.0.0.1:2000";
@@ -96,10 +96,6 @@ namespace TestTee
             try
             {
                 Console.WriteLine("Press Ctrl+C to end.");
-                
-                
-                
-                
                 await MainAsync(cts.Token);
             }
             catch (OperationCanceledException)
