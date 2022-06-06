@@ -34,7 +34,7 @@ namespace Ajuna.NetApi
 {
 
 
-    public sealed class SubstrateClientExt : Ajuna.NetApi.SubstrateClient
+    public  class SubstrateClientExt : Ajuna.NetApi.SubstrateClient
     {
         /// <summary> The logger. </summary>
         private static readonly ILogger Logger = LogManager.GetCurrentClassLogger();
@@ -291,7 +291,7 @@ namespace Ajuna.NetApi
             return null;
         }
 
-        public async Task<RpcReturnValue> ExecuteTrustedOperationAsync(EnumTrustedOperation trustedOperation, RSAParameters shieldingKey, string shardHex)
+        public virtual async Task<RpcReturnValue> ExecuteTrustedOperationAsync(EnumTrustedOperation trustedOperation, RSAParameters shieldingKey, string shardHex)
         {
             var cypherText = Wrapper.SignTrustedOperation(shieldingKey, trustedOperation);
 
