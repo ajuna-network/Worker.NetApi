@@ -1,52 +1,24 @@
-﻿using Ajuna.NetApi;
-using Ajuna.NetApi.Model.AjunaWorker;
+﻿using System.Diagnostics;
 using Ajuna.NetApi.Model.PalletConnectfour;
-using Ajuna.NetApi.Model.PrimitiveTypes;
 using Ajuna.NetApi.Model.Rpc;
 using Ajuna.NetApi.Model.SpCore;
-using Ajuna.NetApi.Model.SpRuntime;
 using Ajuna.NetApi.Model.Types;
-using Ajuna.NetApi.Model.Types.Base;
 using Ajuna.NetApi.Model.Types.Primitive;
-using Chaos.NaCl;
-using Nerdbank.Streams;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
+using Ajuna.NetApi.Worker.WebSocketClient;
 using NLog;
 using NLog.Config;
 using NLog.Targets;
-using Org.BouncyCastle.Security;
 using Schnorrkel.Keys;
-using SimpleBase;
-using StreamJsonRpc;
-using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.IO;
-using System.Linq;
-using System.Net;
-using System.Net.Security;
-using System.Net.WebSockets;
-using System.Numerics;
-using System.Runtime.InteropServices;
-using System.Security.Cryptography;
-using System.Security.Cryptography.X509Certificates;
-using System.Text;
-using System.Threading;
-using System.Threading.Tasks;
-using Ajuna.NetApi.Worker.WebSocketClient;
-using WebSocketSharp;
 
-namespace TestTee
+namespace Ajuna.NetApi.Worker
 {
     class Program
     {
-        public static string NgrokWebSocketUrl = "ws://b6db-176-92-130-147.ngrok.io/";
+        private const string NgrokWebSocketUrl = "ws://b6db-176-92-130-147.ngrok.io/";
+        private const string mrenclaveHex = "2qWxMc45Lp5mHuCsnNnD3d63n3cNiC7183FQXDu88ijn";
+        
         //private const string Websocketurl = "ws://127.0.0.1:9944";
-        //private const string Websocketurl = "wss://127.0.0.1:2001";
-        //private const string Websocketurl = "ws://127.0.0.1:2000";
-        // private const string Websocketurl = "wss://demo.piesocket.com/v3/channel_1?api_key=oCdCMcMPQpbvNjUIzqtvF1d2X2okWpDQj4AwARJuAgtjhzKxVEjQU6IdCjwm&notify_self";
-
+        
         // Secret Key URI `//Alice` is account:
         // Secret seed:      0xe5be9a5092b81bca64be81d212e7f2f9eba183bb7a90954f7b76361f6edb5c0a
         // Public key(hex):  0xd43593c715fdd31c61141abd04a99fd6822c8558854ccde39a5684e7a56da27d
@@ -77,8 +49,8 @@ namespace TestTee
             var logconsole = new ConsoleTarget("logconsole");
 
             // Rules for mapping loggers to targets            
-            //config.AddRule(LogLevel.Trace, LogLevel.Fatal, logconsole);
-            config.AddRule(NLog.LogLevel.Trace, NLog.LogLevel.Fatal, logfile);
+            config.AddRule(LogLevel.Info, LogLevel.Fatal, logconsole);
+            config.AddRule(LogLevel.Trace, LogLevel.Fatal, logfile);
 
             // Apply config           
             LogManager.Configuration = config;
@@ -106,17 +78,35 @@ namespace TestTee
 
         private static async Task MainAsync(CancellationToken cancellationToken)
         {
+            var ngrok = "wss://9ae9-84-75-48-249.ngrok.io";
+            var shardHex = "3JFfg4Ff2SHk7sCsY6nZ59m92vFSCxmWQ1jgh52VzDqT";
+            var mrenclaveHex = "3JFfg4Ff2SHk7sCsY6nZ59m92vFSCxmWQ1jgh52VzDqT";
+
             //await LaunchGameAsync("ws://127.0.0.1:9944");
             //await TestNodeAsync("ws://127.0.0.1:9944");
 
             //await RunGameAsync("ws://127.0.0.1:2000");
-           // await RunGameAsync(NgrokWebSocketUrl);
-            
+
+            await RunTransactionTestAsync(
+                websocketurl: ngrok,
+                shardHex: shardHex,
+                mrenclaveHex: mrenclaveHex
+            );
+
+            //await RunRPCMethodsTestAsync(
+            //    websocketurl: ngrok);
+        }        
+        
+        /// <summary>
+        /// Test with the SubstrateTrackingClientExt where the connection is not closed
+        /// </summary>
+        /// <param name="cancellationToken"></param>
+        private static async Task TestWithSubstrateTrackingClientExt(CancellationToken cancellationToken)
+        {
             var client = new SubstrateTrackingClientExt(new Uri(NgrokWebSocketUrl));
             
             var shieldingKey = await client.ShieldingKeyAsync();
 
-            var mrenclaveHex = "2qWxMc45Lp5mHuCsnNnD3d63n3cNiC7183FQXDu88ijn";
             var shardHex = mrenclaveHex;
             var player = Alice;
 
@@ -132,21 +122,18 @@ namespace TestTee
             var hash = await client.PlayTurnAsync(Alice, 3, shieldingKey, shardHex, mrenclaveHex);
 
             Thread.Sleep(2000);
-
-            //await PrintBoardAsync(Alice, shieldingKey, shardHex);
     
-            Thread.Sleep(2000);
-
             await client.BalanceTransferAsync(Alice, Bob, (uint)100000, shieldingKey, shardHex, mrenclaveHex);
 
             Thread.Sleep(2000);
 
-           var balanceOfAlice =  await client.GetFreeBalanceAsync(Alice, shieldingKey, shardHex);
-           var balanceOfBob =  await client.GetFreeBalanceAsync(Alice, shieldingKey, shardHex);
+            var balanceOfAlice =  await client.GetFreeBalanceAsync(Alice, shieldingKey, shardHex);
+            var balanceOfBob =  await client.GetFreeBalanceAsync(Alice, shieldingKey, shardHex);
+            
+            Console.WriteLine($"Alice has {balanceOfAlice}");
+            Console.WriteLine($"Bob has {balanceOfBob}");
 
             client.Dispose();
-
-
         }
 
         private static async Task RunGameAsync(string websocketurl)
@@ -239,6 +226,52 @@ namespace TestTee
                 default:
                     break;
             }
+        }
+        
+        
+        private static async Task RunTransactionTestAsync(string websocketurl, string shardHex, string mrenclaveHex)
+        {
+            /**
+             * docker ps
+             * docker exec -it 7aeac2a21f93 /bin/bash
+             * ./integritee-cli trusted transfer //Alice //Bob 1000 --mrenclave 2CMLqGnL56xp4qkVDq4pmKKYJn4btSGF9brgGEsGW3qm --direct
+             */
+
+            var client = new SubstrateClientExt(new Uri(websocketurl));
+
+            await client.ConnectAsync(false, false, false, CancellationToken.None);
+
+            var shieldingKey = await client.ShieldingKeyAsync();
+
+            //Thread.Sleep(2000);
+
+            // - TrustedOperation
+
+            var player = Alice;
+
+            //var boardStruct1 = await client.GetBoardStructAsync(player, shieldingKey, shardHex);
+            //if (boardStruct1 != null) PrintBoard(boardStruct1);
+
+            //var hash = await client.PlayTurnAsync(Alice, 3, shieldingKey, shardHex, mrenclaveHex);
+
+            Thread.Sleep(2000);
+
+            var balance1 = await client.GetFreeBalanceAsync(player, shieldingKey, shardHex);
+            if (balance1 != null) Console.WriteLine($"Balance[{player.Value}] = {balance1.Value}");
+
+            Thread.Sleep(2000);
+
+            await client.BalanceTransferAsync(Alice, Bob, (uint)100000, shieldingKey, shardHex, mrenclaveHex);
+
+            Thread.Sleep(2000);
+
+            var balance2 = await client.GetFreeBalanceAsync(player, shieldingKey, shardHex);
+            if (balance2 != null) Console.WriteLine($"Balance[{player.Value}] = {balance2.Value}");
+
+            Thread.Sleep(2000);
+
+            // close connection
+            await client.CloseAsync();
         }
 
         private static async Task TestNodeAsync(string websocketurl)
