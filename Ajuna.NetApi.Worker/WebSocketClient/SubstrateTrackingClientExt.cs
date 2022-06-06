@@ -1,6 +1,7 @@
 using System.Security.Cryptography;
 using Ajuna.NetApi.Model.AjunaWorker;
 using Ajuna.NetApi.Model.PrimitiveTypes;
+using Ajuna.NetApiExt.Model.AjunaWorker.Helper;
 using SimpleBase;
 
 namespace Ajuna.NetApi.Worker.WebSocketClient;
@@ -26,7 +27,7 @@ public class SubstrateTrackingClientExt : SubstrateClientExt
     public override async Task<RpcReturnValue> ExecuteTrustedOperationAsync(EnumTrustedOperation trustedOperation,
         RSAParameters shieldingKey, string shardHex)
     {
-        var cypherText = SignTrustedOperation(shieldingKey, trustedOperation);
+        var cypherText = Wrapper.SignTrustedOperation(shieldingKey, trustedOperation);
 
         // - ShardIdentifier
         var shardId = new H256();
@@ -35,7 +36,7 @@ public class SubstrateTrackingClientExt : SubstrateClientExt
         Request initialRequest = new Request
         {
             Shard = shardId,
-            CypherText = VecU8FromBytes(cypherText)
+            CypherText = Wrapper.VecU8FromBytes(cypherText)
         };
 
         var parameters = initialRequest.Encode().Cast<object>().ToArray();
